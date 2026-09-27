@@ -133,10 +133,29 @@
     </details>
   </div>
 </section>
+<section class="page" id="pgPlan" aria-label="Plan" hidden>
+  <header class="appbar">
+    <div>
+      <h1>Plan a date</h1>
+      <p>Times you’re both free</p>
+    </div>
+  </header>
+  <section class="cal-card" id="calCard"></section>
+  <div class="shead"><h2>Booked</h2><span id="plansCount"></span></div>
+  <ul class="list plans" id="plansList"></ul>
+  <div class="shead"><h2>Suggested times</h2><button type="button" class="icon-btn rp" id="planSync" aria-label="Refresh my calendar"><span class="ms" aria-hidden="true">refresh</span></button></div>
+  <p class="sub">What for?</p>
+  <div class="chips wrapchips" id="planFor"></div>
+  <p class="sub">How long?</p>
+  <div class="seg" id="planDur" role="radiogroup" aria-label="How long"></div>
+  <p class="banner plan-note" id="planNote" hidden></p>
+  <div id="slots"></div>
+</section>
 <button type="button" class="fab rp" id="fab"><span class="ms" aria-hidden="true">add</span><span id="fabLabel">Add</span></button>
 <nav class="nav" aria-label="Pages">
   <button type="button" data-page="summary"><span class="ind rp"><span class="ms" aria-hidden="true">space_dashboard</span><span class="badge" id="navBadge" hidden></span></span><span>Summary</span></button>
   <button type="button" data-page="lists"><span class="ind rp"><span class="ms" aria-hidden="true">checklist</span></span><span>Lists</span></button>
+  <button type="button" data-page="plan"><span class="ind rp"><span class="ms" aria-hidden="true">event</span></span><span>Plan</span></button>
 </nav>
 <dialog class="sheet" id="sheet" aria-labelledby="sheetTitle">
   <form id="sheetForm" autocomplete="off">
@@ -154,6 +173,7 @@
       <button type="button" role="radio" data-pr="3"><span class="ms" aria-hidden="true">check</span>Top</button>
     </div>
     <p class="sheet-meta" id="sheetMeta"></p>
+    <button type="button" class="btn tonal rp find-time" id="findTime"><span class="ms" aria-hidden="true">event</span>Find a time</button>
     <div class="sheet-actions">
       <button type="button" class="btn text danger rp" id="delBtn"><span class="ms" aria-hidden="true">delete</span>Delete</button>
       <span class="grow"></span>
@@ -217,6 +237,22 @@
   <p class="pin-err" id="pinErr" role="alert"></p>
   <div class="keypad" id="keypad"><button type="button" class="rp" data-k="1">1</button><button type="button" class="rp" data-k="2">2</button><button type="button" class="rp" data-k="3">3</button><button type="button" class="rp" data-k="4">4</button><button type="button" class="rp" data-k="5">5</button><button type="button" class="rp" data-k="6">6</button><button type="button" class="rp" data-k="7">7</button><button type="button" class="rp" data-k="8">8</button><button type="button" class="rp" data-k="9">9</button><span></span><button type="button" class="rp" data-k="0">0</button><button type="button" class="bk rp" data-k="bk" aria-label="Delete digit"><span class="ms" aria-hidden="true">backspace</span></button></div>
   <div class="alert-actions"><button type="button" class="btn text rp" id="pinCancel">Cancel</button></div>
+</dialog>
+<dialog class="sheet" id="bookSheet" aria-labelledby="bookTitle">
+  <form id="bookForm" autocomplete="off">
+    <div class="handle" aria-hidden="true"></div>
+    <h2 id="bookTitle">Add to your calendar</h2>
+    <p class="rate-sub" id="bookWhen"></p>
+    <div class="field"><input id="bTitle" maxlength="100" placeholder=" "><label for="bTitle">Event name</label></div>
+    <p class="sub" id="bCalLabel">Which calendar?</p>
+    <div class="pick" id="bCal" role="radiogroup" aria-labelledby="bCalLabel"></div>
+    <p class="sheet-meta" id="bookNote"></p>
+    <div class="sheet-actions">
+      <span class="grow"></span>
+      <button type="button" class="btn text rp" id="bookCancel">Cancel</button>
+      <button type="submit" class="btn filled rp" id="bookSave">Add to calendar</button>
+    </div>
+  </form>
 </dialog>
 <div class="snack" id="snack" role="status"><span id="snackMsg"></span><button type="button" id="snackUndo">Undo</button></div>
 </div>

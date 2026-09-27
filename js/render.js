@@ -3,7 +3,8 @@
 
 import { CONFIG } from './config.js';
 import { $, qa, esc, plural, initial, todayISO, daysBetween, fmt, weekday } from './util.js';
-import { S, cat, avgOf, fmtAvg, isMyTurn, waiting, otherOf, sortOpen, sortDone } from './state.js';
+import { S, cat, avgOf, fmtAvg, isMyTurn, waiting, otherOf, sortOpen, sortDone, planFor } from './state.js';
+import { renderPlan } from './planner.js';
 import { setNum, reduce } from './motion.js';
 
 const RING_C = 263.9;
@@ -15,6 +16,8 @@ function meta(it, today) {
     const took = daysBetween(it.addedAt, it.doneAt);
     return 'Crossed off ' + fmt(it.doneAt) + (took <= 0 ? ', same day we added it' : ', after ' + plural(took, 'day'));
   }
+  const p = planFor(it.id);
+  if (p) return 'Planned for ' + new Date(p.start).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) + ' at ' + new Date(p.start).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   const d = daysBetween(it.addedAt, today);
   if (d <= 0) return 'Added today';
   if (d === 1) return 'Added yesterday';
@@ -191,8 +194,9 @@ export function render() {
   const today = todayISO();
   if (!cat(S.tab)) S.tab = S.data.cats[0].id;
   qa('.nav button').forEach((b) => { if (b.getAttribute('data-page') === S.page) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
-  $('pgSummary').hidden = S.page !== 'summary'; $('pgLists').hidden = S.page !== 'lists';
-  renderSummary(today); renderLists(today);
+  $('pgSummary').hidden = S.page !== 'summary'; $('pgLists').hidden = S.page !== 'lists'; $('pgPlan').hidden = S.page !== 'plan';
+  $('fab').hidden = S.page === 'plan';
+  renderSummary(today); renderLists(today); renderPlan();
   S.newId = null;
   if (S.page === 'lists') positionInd();
   setStatus();

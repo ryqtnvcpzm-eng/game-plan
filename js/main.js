@@ -16,9 +16,11 @@ import { initListSheet } from './list-sheet.js';
 import { initRating } from './rating.js';
 import { initPeople, greet } from './people.js';
 import { initPalette } from './palette.js';
+import { initPlanner, onOpenPlan, resumePendingBook, resumePendingOpen } from './planner.js';
+import { handleOutlookReturn, handleGoogleReturn, preloadGoogle, PROVIDERS } from './calendar.js';
 
 const BOARD_KEY = 'gp-board';
-let shown = false, justCreated = false;
+let shown = false, justCreated = false, outlookResult = null;
 
 /* ---------- words from config.js */
 function applyLabels() {
@@ -65,7 +67,13 @@ function showApp() {
   if (first) entrance(S.page);
   shown = true;
   if (justCreated) { justCreated = false; setTimeout(() => showSnack('Your board is ready. Tap the share icon to send the link.'), 900); }
-  else greet(first);
+  else if (outlookResult) {
+    const r = outlookResult; outlookResult = null;
+    if (r.error) showSnack(r.error);
+    else { showSnack(PROVIDERS[r.provider].name + ' connected'); resumePendingBook(); resumePendingOpen(); }
+    if (S.page === 'plan') onOpenPlan();
+  }
+  else { greet(first); if (S.page === 'plan') onOpenPlan(); }
 }
 function errorText(err) {
   const c = (err && err.code) || '';
@@ -137,7 +145,10 @@ async function boot() {
   applyLabels();
   initRipple(); initPalette(); initSnack(commit);
   initActions(); initItemSheet(); initListSheet(); initRating(); initPeople();
-  initWelcome(); initShare();
+  initWelcome(); initShare(); initPlanner();
+  outlookResult = handleGoogleReturn() || await handleOutlookReturn();   // back from a calendar sign-in?
+  if (outlookResult) { S.page = 'plan'; }
+  preloadGoogle();
   window.addEventListener('online', () => { S.offline = false; if (shown) setStatus(); });
   window.addEventListener('offline', () => { S.offline = true; if (shown) setStatus(); });
   document.addEventListener('visibilitychange', () => {

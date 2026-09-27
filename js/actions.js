@@ -12,6 +12,7 @@ import { showSnack } from './dialogs.js';
 import { openItemSheet } from './item-sheet.js';
 import { openRate } from './rating.js';
 import { openListSheet } from './list-sheet.js';
+import { onOpenPlan } from './planner.js';
 
 /* Call after changing S.data: redraws (rows slide to new spots) and saves. */
 export function commit() {
@@ -79,8 +80,9 @@ function onRowClick(e) {
 export function goPage(p) {
   if (p === S.page) return;
   S.page = p; render(); window.scrollTo(0, 0); saveUI();
-  fadeThrough(p === 'summary' ? $('pgSummary') : $('pgLists'));
+  fadeThrough($(p === 'summary' ? 'pgSummary' : p === 'lists' ? 'pgLists' : 'pgPlan'));
   if (p === 'lists') revealTab(false);
+  if (p === 'plan') onOpenPlan();
 }
 export function openList(id) {
   S.tab = id; S.filter = 'all'; S.page = 'lists';

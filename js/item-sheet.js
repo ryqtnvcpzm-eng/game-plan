@@ -7,6 +7,7 @@ import { S, cat, find } from './state.js';
 import { collapse } from './motion.js';
 import { closeDialog, showSnack } from './dialogs.js';
 import { commit, visibleItem } from './actions.js';
+import { findTimeFor } from './planner.js';
 
 let sheet = null;   // { mode: 'add'|'edit', id, list, pr }
 const dlg = () => $('sheet');
@@ -29,6 +30,7 @@ export function openItemSheet(m, id) {
   $('delBtn').hidden = m !== 'edit';
   $('sheetMeta').textContent = it ? 'Added ' + fmt(it.addedAt, true) + (it.doneAt ? '. Crossed off ' + fmt(it.doneAt, true) + '.' : '.') : '';
   $('sheetMeta').hidden = !it;
+  $('findTime').hidden = !it || !!it.doneAt;
   syncSave();
   if (!dlg().open) dlg().showModal();
   if (m === 'add') $('fTitle').focus();
@@ -83,6 +85,7 @@ export function initItemSheet() {
   dlg().addEventListener('close', () => { sheet = null; });
   $('sheetForm').addEventListener('submit', submit);
   $('delBtn').addEventListener('click', remove);
+  $('findTime').addEventListener('click', () => { if (!sheet) return; const id = sheet.id; close(); findTimeFor(id); });
   /* priority labels come from config.js */
   qa('#seg button').forEach((b) => { const i = +b.getAttribute('data-pr'); b.lastChild.textContent = CONFIG.priorities[i]; });
 }

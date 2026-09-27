@@ -4,6 +4,8 @@
      meta   { startedAt, people, pins, pinSalt, seq }
      cats   { <listId>: { name, icon, order } }
      items  { <itemId>: { ...item } }
+     busy   { 0: {at, until, blocks, src}, 1: {...} }   each person's busy times (no event details)
+     plans  { <planId>: { title, itemId, start, end, by, added } }   booked date times
    Only the parts that changed are sent, so two people editing different
    things at the same time never overwrite each other.
 
@@ -34,27 +36,35 @@ export function flatten(d) {
   };
   d.cats.forEach((c, i) => { o['cats.' + c.id] = { name: c.name, icon: c.icon, order: i }; });
   d.items.forEach((it) => { o['items.' + it.id] = cleanItem(it); });
+  (d.busy || []).forEach((b, i) => { if (b) o['busy.' + i] = { at: b.at || 0, until: b.until || 0, blocks: [].concat.apply([], b.blocks || []), src: (b.src || []).slice() }; });
+  (d.plans || []).forEach((p) => { o['plans.' + p.id] = { title: p.title, itemId: p.itemId || null, start: p.start, end: p.end, by: p.by, added: (p.added || [null, null]).slice(0, 2) }; });
   return o;
 }
 export function unflatten(o) {
-  const d = { cats: [], items: [] };
+  const d = { cats: [], items: [], busy: [null, null], plans: [] };
   Object.keys(o).forEach((k) => {
     const dot = k.indexOf('.'), group = k.slice(0, dot), key = k.slice(dot + 1), v = o[k];
     if (group === 'meta') d[key] = v;
     else if (group === 'cats') d.cats.push({ id: key, name: v.name, icon: v.icon, order: v.order || 0 });
     else if (group === 'items') d.items.push(Object.assign({}, v, { id: key }));
+    else if (group === 'busy') {            // stored flat [s1, e1, s2, e2...]; used as pairs
+      const f = v.blocks || [], pairs = [];
+      for (let i = 0; i + 1 < f.length; i += 2) pairs.push([f[i], f[i + 1]]);
+      d.busy[+key] = Object.assign({}, v, { blocks: pairs });
+    }
+    else if (group === 'plans') d.plans.push(Object.assign({}, v, { id: key }));
   });
   d.cats.sort((a, b) => a.order - b.order).forEach((c) => delete c.order);
   return d;
 }
 function nest(o) {
-  const doc = { meta: {}, cats: {}, items: {} };
+  const doc = { meta: {}, cats: {}, items: {}, busy: {}, plans: {} };
   Object.keys(o).forEach((k) => { const dot = k.indexOf('.'); doc[k.slice(0, dot)][k.slice(dot + 1)] = o[k]; });
   return doc;
 }
 function flatFromDoc(doc) {
   const o = {};
-  ['meta', 'cats', 'items'].forEach((g) => { const part = doc[g] || {}; Object.keys(part).forEach((k) => { o[g + '.' + k] = part[k]; }); });
+  ['meta', 'cats', 'items', 'busy', 'plans'].forEach((g) => { const part = doc[g] || {}; Object.keys(part).forEach((k) => { o[g + '.' + k] = part[k]; }); });
   return o;
 }
 export const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);

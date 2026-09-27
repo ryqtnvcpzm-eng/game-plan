@@ -290,4 +290,45 @@ button{font:inherit;color:inherit;letter-spacing:inherit}
 @keyframes spin{to{transform:rotate(360deg)}}
 .banner{display:flex;gap:12px;align-items:flex-start;margin:0 0 12px;padding:14px 16px;border-radius:16px;background:var(--surface-high);color:var(--on-surface-variant);font-size:14px;line-height:20px;letter-spacing:.25px}
 .banner .ms{color:var(--primary);font-size:20px}
+/* plan page */
+.cal-card{background:var(--surface-mid);border-radius:24px;padding:16px}
+.cal-card .sub{margin-top:0}
+.cal-hint{margin:0 0 12px;font-size:14px;line-height:20px;letter-spacing:.25px;color:var(--on-surface-variant)}
+.cal-chips{display:flex;flex-wrap:wrap;gap:8px}
+.cal-chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px 0 10px;border:1px solid var(--outline-variant);border-radius:10px;background:transparent;color:var(--primary);font-size:14px;font-weight:500;letter-spacing:.1px;cursor:pointer}
+.cal-chip .ms{font-size:18px}
+.cal-chip.on{background:var(--secondary-container);color:var(--on-secondary-container);border-color:transparent;padding-right:4px;cursor:default}
+.cal-chip .x{width:28px;height:28px;border:0;border-radius:50%;background:transparent;display:grid;place-items:center;cursor:pointer;color:inherit;padding:0}
+.cal-people{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.cal-people li{display:flex;align-items:center;gap:12px}
+.cal-people .av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--primary);color:var(--on-primary);font-size:14px;font-weight:600;flex:none}
+.cal-people li.none .av{background:transparent;color:var(--on-surface-variant);border:1.5px dashed var(--outline)}
+.cal-people li.stale .av{background:var(--tertiary-container);color:var(--on-tertiary-container)}
+.cal-people li > span:last-child{display:flex;flex-direction:column;font-size:12px;line-height:16px;letter-spacing:.4px;color:var(--on-surface-variant)}
+.cal-people b{font-size:14px;line-height:20px;font-weight:500;color:var(--on-surface);letter-spacing:.1px}
+.cal-err{margin:12px 0 0;font-size:14px;line-height:20px;color:var(--error)}
+.btn.tonal.sm{height:36px;padding:0 16px;flex:none}
+.plan-row{display:flex;align-items:center;gap:12px;padding:12px 8px 12px 12px;background:var(--surface-mid);border-radius:4px}
+.plan-row:first-child{border-top-left-radius:20px;border-top-right-radius:20px}
+.plan-row:last-child{border-bottom-left-radius:20px;border-bottom-right-radius:20px}
+.plan-row .pic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--primary-container);color:var(--on-primary-container);flex:none}
+.plan-row .pbody{flex:1;min-width:0;display:flex;flex-direction:column}
+.plan-row .pbody b{font-size:16px;line-height:24px;font-weight:500;letter-spacing:.15px;overflow-wrap:anywhere}
+.plan-row .pbody span{font-size:14px;line-height:20px;letter-spacing:.25px;color:var(--on-surface-variant)}
+.plan-row .pbody .pin-cal{font-size:12px;line-height:16px;letter-spacing:.4px;color:var(--outline)}
+.wrapchips{flex-wrap:wrap;overflow:visible;padding:0;border:0}
+#pgPlan .sub{padding:0 4px}
+#pgPlan .seg{margin-bottom:16px}
+.plan-note{margin:0 0 12px}
+#planSync.spinning .ms{animation:spin 1s linear infinite}
+#planSync:disabled{opacity:.4;cursor:default}
+.day-group{margin-bottom:16px}
+.day-group h3{margin:0 0 8px;padding:0 8px;font-size:14px;line-height:20px;font-weight:500;letter-spacing:.1px;color:var(--primary)}
+.slot{display:flex;align-items:center;gap:12px;padding:12px 12px 12px 16px;margin-bottom:2px;background:var(--surface-mid);border-radius:4px}
+.day-group .slot:first-of-type{border-top-left-radius:20px;border-top-right-radius:20px}
+.day-group .slot:last-child{border-bottom-left-radius:20px;border-bottom-right-radius:20px}
+.slot .sbody{flex:1;display:flex;flex-direction:column}
+.slot .sbody b{font-size:16px;line-height:24px;font-weight:500;letter-spacing:.15px;font-variant-numeric:tabular-nums}
+.slot .sbody span{font-size:12px;line-height:16px;letter-spacing:.4px;color:var(--on-surface-variant)}
+.find-time{margin-top:16px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}

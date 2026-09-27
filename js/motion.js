@@ -95,7 +95,7 @@ export function initRipple() {
 /* first open of the session: things rise in one after another */
 export function entrance(page) {
   if (reduce) return;
-  const pg = page === 'summary' ? $('pgSummary') : $('pgLists');
+  const pg = $(page === 'summary' ? 'pgSummary' : page === 'lists' ? 'pgLists' : 'pgPlan');
   let els = qa(':scope > *', pg).slice(0, 7);
   els = els.concat(page === 'lists' ? qa('#openList > li').slice(0, 8) : qa('#cats > *'));
   els.forEach((el, i) => anim(el, [{ opacity: 0, transform: 'translateY(18px)' }, { opacity: 1, transform: 'none' }], { duration: 650, delay: i * 45, easing: EMPH_DEC, fill: 'backwards' }));
