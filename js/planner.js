@@ -12,7 +12,7 @@ import { closeDialog, showSnack } from './dialogs.js';
 import { commit, goPage } from './actions.js';
 import { slideIn } from './motion.js';
 
-const P = { forId: '', dur: CAL.defaultDuration, syncing: false, error: '' };
+const P = { catId: '', forId: '', dur: CAL.defaultDuration, syncing: false, error: '' };   // catId '' = anything
 let book = null;          // the open booking sheet: { start, end, planId, itemId }
 const MIN = 60e3, HOUR = 3600e3;
 
@@ -43,6 +43,23 @@ function freeInside(ws, we, busy) {
   if (cur < we) out.push([cur, we]);
   return out;
 }
+/* date hours for a kind of plan: its own hours (listHours in calendar-config.js), or the general ones */
+const LIST_HOURS = CAL.listHours || { movie: { weekday: [['18:30', '23:30']], weekend: [['13:00', '23:30']] } };
+const DEFAULT_TITLE = !CAL.defaultEventTitle || CAL.defaultEventTitle === 'Date night' ? 'Plans' : CAL.defaultEventTitle;
+function hoursFor(catId, weekend) {
+  const own = catId && LIST_HOURS[catId];
+  if (own && own[weekend ? 'weekend' : 'weekday']) return own[weekend ? 'weekend' : 'weekday'];
+  return weekend ? CAL.weekendHours : CAL.weekdayHours;
+}
+/* what new calendar events are called: the item, or "Movies with Camy", or "Plans with Camy" */
+function eventTitle() {
+  const it = P.forId ? S.data.items[find(P.forId)] : null;
+  if (it) return it.title;
+  const other = S.me !== null ? S.data.people[otherOf(S.me)] : '';
+  const c = P.catId ? cat(P.catId) : null;
+  const base = c ? c.name : DEFAULT_TITLE;
+  return other ? base + ' with ' + other : base;
+}
 export function suggestions(durMin) {
   const people = [0, 1].map((i) => S.data.busy[i]).filter(Boolean);
   const busy = cal.mergeBlocks([].concat(
@@ -56,7 +73,7 @@ export function suggestions(durMin) {
     const day = new Date(); day.setHours(0, 0, 0, 0); day.setDate(day.getDate() + d);
     const wk = day.getDay() === 0 || day.getDay() === 6;
     let today = 0;
-    (wk ? CAL.weekendHours : CAL.weekdayHours).forEach(([a, b]) => {
+    hoursFor(P.catId, wk).forEach(([a, b]) => {
       const ws = at(day, a), we = b === '24:00' ? at(day, '23:59') + MIN : at(day, b);
       freeInside(ws, we, busy).forEach(([fs, fe]) => {
         if (today >= CAL.perDay || out.length >= CAL.maxSuggestions) return;
@@ -112,7 +129,8 @@ function planRow(p) {
   const me = S.me, names = S.data.people, added = p.added || [];
   const inCal = [0, 1].filter((i) => added[i]).map((i) => names[i]);
   const mine = me !== null && added[me];
-  return '<li class="plan-row" data-plan="' + esc(p.id) + '"><span class="pic"><span class="ms" aria-hidden="true">event</span></span>'
+  const pc = p.catId ? cat(p.catId) : (p.itemId && find(p.itemId) > -1 ? cat(S.data.items[find(p.itemId)].list) : null);
+  return '<li class="plan-row" data-plan="' + esc(p.id) + '"><span class="pic"><span class="ms" aria-hidden="true">' + (pc ? esc(pc.icon) : 'event') + '</span></span>'
     + '<span class="pbody"><b>' + esc(p.title) + '</b><span>' + dayName(p.start) + ', ' + rangeText(p.start, p.end) + '</span>'
     + '<span class="pin-cal">' + (inCal.length ? 'In ' + inCal.join(' and ') + '’s calendar' : 'Not in a calendar yet') + '</span></span>'
     + (me !== null && !mine ? '<button type="button" class="btn tonal sm rp" data-addmine="1">Add to mine</button>' : '')
@@ -127,12 +145,25 @@ export function renderPlan() {
     : '<li class="empty"><span class="ms" aria-hidden="true">event_available</span>Nothing booked yet. Pick a time below.</li>';
   $('plansCount').textContent = plans.length ? plural(plans.length, 'plan') : '';
 
-  /* what for */
-  const open = S.data.items.filter((i) => !i.doneAt).sort(sortOpen).slice(0, 10);
+  /* step 1: what kind of plan (one card per list) */
+  if (P.catId && !cat(P.catId)) { P.catId = ''; P.forId = ''; }
   if (P.forId && find(P.forId) < 0) P.forId = '';
-  if (P.forId && !open.some((i) => i.id === P.forId)) open.unshift(S.data.items[find(P.forId)]);
-  $('planFor').innerHTML = '<button type="button" class="fchip rp" data-for="" aria-pressed="' + (!P.forId) + '"><span class="ms ck" aria-hidden="true">check</span>Just us</button>'
-    + open.map((i) => { const c = cat(i.list); return '<button type="button" class="fchip rp" data-for="' + esc(i.id) + '" aria-pressed="' + (P.forId === i.id) + '"><span class="ms ck" aria-hidden="true">check</span>' + (c ? '<span class="ms li" aria-hidden="true">' + esc(c.icon) + '</span>' : '') + esc(i.title) + '</button>'; }).join('');
+  $('planKind').innerHTML = '<button type="button" class="kind" data-kind="" aria-pressed="' + (!P.catId) + '"><span class="kic"><span class="ms" aria-hidden="true">auto_awesome</span></span><span class="kname">Anything</span></button>'
+    + S.data.cats.map((c) => {
+      const n = S.data.items.filter((i) => i.list === c.id && !i.doneAt).length;
+      return '<button type="button" class="kind" data-kind="' + esc(c.id) + '" aria-pressed="' + (P.catId === c.id) + '"><span class="kic"><span class="ms" aria-hidden="true">' + esc(c.icon) + '</span></span><span class="kname">' + esc(c.name) + '</span><span class="kn">' + n + ' to do</span></button>';
+    }).join('');
+
+  /* step 2: which one (only for a chosen kind) */
+  const c = P.catId ? cat(P.catId) : null;
+  $('planWhich').hidden = !c;
+  if (c) {
+    const open = S.data.items.filter((i) => i.list === c.id && !i.doneAt).sort(sortOpen).slice(0, 14);
+    $('planWhichLbl').textContent = 'Which one?';
+    $('planFor').innerHTML = '<button type="button" class="fchip" data-for="" aria-pressed="' + (!P.forId) + '">Not sure yet</button>'
+      + open.map((i) => '<button type="button" class="fchip" data-for="' + esc(i.id) + '" aria-pressed="' + (P.forId === i.id) + '">' + (i.pr ? '<i class="pdot p' + i.pr + '"></i>' : '') + esc(i.title) + '</button>').join('')
+      + (open.length ? '' : '<span class="kn">Nothing left on this list.</span>');
+  }
 
   /* how long */
   const durs = CAL.durations.indexOf(P.dur) < 0 ? CAL.durations.concat(P.dur).sort((a, b) => a - b) : CAL.durations;
@@ -141,12 +172,13 @@ export function renderPlan() {
   /* suggestions */
   const have = [0, 1].filter((i) => S.data.busy[i]);
   let note = '';
-  if (!have.length) note = 'Connect a calendar to see when you’re both free. Until then these are just your usual date hours.';
+  if (!have.length) note = 'Connect a calendar to see when you’re both free. Until then, these are just your usual hours.';
   else if (have.length === 1) note = 'Only ' + S.data.people[have[0]] + '’s calendar is connected, so these only check ' + (have[0] === S.me ? 'yours' : 'theirs') + '.';
   $('planNote').textContent = note; $('planNote').hidden = !note;
   $('planSync').disabled = P.syncing || S.me === null || !cal.connectedList().length;
   $('planSync').classList.toggle('spinning', P.syncing);
   const list = suggestions(P.dur);
+  $('slotsFor').textContent = P.forId ? 'for ' + S.data.items[find(P.forId)].title : c ? 'for ' + c.name.toLowerCase() : '';
   if (!list.length) { $('slots').innerHTML = '<p class="empty"><span class="ms" aria-hidden="true">event_busy</span>No shared free time in the next ' + CAL.lookaheadDays + ' days for that length. Try a shorter one.</p>'; return; }
   let html = '', lastDay = '';
   list.forEach((s) => {
@@ -161,7 +193,7 @@ export function renderPlan() {
 /* ---------- entry points from elsewhere */
 export function findTimeFor(itemId) {
   const i = find(itemId); if (i < 0) return;
-  P.forId = itemId;
+  P.forId = itemId; P.catId = S.data.items[i].list;
   P.dur = CAL.listDurations[S.data.items[i].list] || CAL.defaultDuration;
   if (S.page === 'plan') { renderPlan(); return; }
   goPage('plan');
@@ -187,7 +219,7 @@ function openBook(b) {
 async function doBook(e) {
   if (e) e.preventDefault();
   if (!book || !book.provider) return;
-  const b = book, title = ($('bTitle').value || '').trim() || CAL.defaultEventTitle;
+  const b = book, title = ($('bTitle').value || '').trim() || DEFAULT_TITLE;
   $('bookSave').disabled = true; $('bookSave').textContent = 'Adding…';
   store.set('gp-pending-book', Object.assign({}, b, { title }));   // survives the Outlook sign-in round trip
   try {
@@ -208,7 +240,7 @@ function afterBooked(b, title) {
     if (p) { p.added = (p.added || [null, null]).slice(); p.added[me] = b.provider; }
   } else {
     const added = [null, null]; added[me] = b.provider;
-    S.data.plans.push({ id: 'p' + uid(), title, itemId: b.itemId || null, start: b.start, end: b.end, by: me, added });
+    S.data.plans.push({ id: 'p' + uid(), title, itemId: b.itemId || null, catId: b.catId || null, start: b.start, end: b.end, by: me, added });
   }
   const mine = S.data.busy[me];
   if (mine) mine.blocks = cal.mergeBlocks((mine.blocks || []).concat([[b.start, b.end]]));
@@ -241,17 +273,20 @@ export function initPlanner() {
       showSnack(cal.PROVIDERS[p].name + ' disconnected from this phone');
       renderPlan(); return;
     }
+    if (t.hasAttribute('data-kind')) {
+      const k = t.getAttribute('data-kind'); if (k === P.catId) return;
+      P.catId = k; P.forId = '';
+      P.dur = (k && CAL.listDurations[k]) || CAL.defaultDuration;
+      renderPlan(); slideIn($('planWhichWrap'), 16); return;
+    }
     if (t.hasAttribute('data-for')) {
       P.forId = t.getAttribute('data-for');
-      const it = P.forId ? S.data.items[find(P.forId)] : null;
-      P.dur = it ? (CAL.listDurations[it.list] || CAL.defaultDuration) : P.dur;
       renderPlan(); return;
     }
     if (t.hasAttribute('data-dur')) { P.dur = +t.getAttribute('data-dur'); renderPlan(); slideIn($('slots'), 16); return; }
     if (t.hasAttribute('data-book')) {
       const [s, en] = t.getAttribute('data-book').split(',').map(Number);
-      const it = P.forId ? S.data.items[find(P.forId)] : null;
-      openBook({ start: s, end: en, itemId: P.forId || null, title: it ? it.title : CAL.defaultEventTitle });
+      openBook({ start: s, end: en, itemId: P.forId || null, catId: P.catId || null, title: eventTitle() });
       return;
     }
     const row = t.closest('[data-plan]');

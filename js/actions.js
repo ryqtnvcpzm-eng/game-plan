@@ -56,7 +56,7 @@ function onRowClick(e) {
       if (willDone) { openRate(id, 'cross'); return; }   // crossing off asks for a rating
       S.data.items[j].doneAt = null;
       commit();
-    }, reduce ? 0 : 460);
+    }, reduce ? 0 : 340);
 
   } else if (act === 'pr') {
     if (S.busy[id]) return;
@@ -98,15 +98,27 @@ function switchTab(id) {
   slideIn($('listArea'), dir * 32);
 }
 
-/* ---------- scrolling: shrink the Add button, tint the frozen header */
-let lastY = 0;
+/* ---------- scrolling: shrink the New button while scrolling down.
+   Kept deliberately light (one class toggle per frame) so scrolling stays smooth. */
+let lastY = 0, ticking = false;
 export function onScroll() {
-  const y = window.scrollY, f = $('fab');
-  if (y > lastY + 6 && y > 120) f.classList.add('shrunk');
-  else if (y < lastY - 6 || y < 60) f.classList.remove('shrunk');
-  lastY = y;
-  const st = $('sticky');
-  if (S.page === 'lists') st.classList.toggle('stuck', st.getBoundingClientRect().top <= (parseFloat(getComputedStyle(st).top) || 0) + 0.5 && y > 4);
+  if (ticking) return;
+  ticking = true;
+  requestAnimationFrame(() => {
+    ticking = false;
+    const y = window.scrollY, f = $('fab');
+    if (y > lastY + 8 && y > 120) { if (!f.classList.contains('shrunk')) f.classList.add('shrunk'); }
+    else if (y < lastY - 8 || y < 60) { if (f.classList.contains('shrunk')) f.classList.remove('shrunk'); }
+    lastY = y;
+  });
+}
+/* the frozen list bar gets a hairline once it's pinned (watched, not polled) */
+function watchSticky() {
+  const st = $('sticky'); if (!st || !window.IntersectionObserver) return;
+  const probe = document.createElement('div');
+  probe.style.cssText = 'height:1px;margin-bottom:-1px;pointer-events:none';
+  st.parentNode.insertBefore(probe, st);
+  new IntersectionObserver(([e]) => st.classList.toggle('stuck', !e.isIntersecting && e.boundingClientRect.top < 80), { rootMargin: '-60px 0px 0px 0px' }).observe(probe);
 }
 
 export function initActions() {
@@ -140,5 +152,6 @@ export function initActions() {
   $('doneBox').open = S.doneOpen;
   $('doneBox').addEventListener('toggle', () => { S.doneOpen = $('doneBox').open; saveUI(); });
   window.addEventListener('scroll', onScroll, { passive: true });
+  watchSticky();
   window.addEventListener('resize', () => { if (S.page === 'lists') positionInd(); });
 }

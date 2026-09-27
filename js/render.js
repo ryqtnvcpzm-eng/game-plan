@@ -5,6 +5,7 @@ import { CONFIG } from './config.js';
 import { $, qa, esc, plural, initial, todayISO, daysBetween, fmt, weekday } from './util.js';
 import { S, cat, avgOf, fmtAvg, isMyTurn, waiting, otherOf, sortOpen, sortDone, planFor } from './state.js';
 import { renderPlan } from './planner.js';
+import { applyPalette } from './palette.js';
 import { setNum, reduce } from './motion.js';
 
 const RING_C = 263.9;
@@ -102,11 +103,6 @@ function renderSummary(today) {
       return itemHTML(i, today, { metaOverride: (c ? esc(c.name) + ', ' : '') + esc(S.data.people[by]) + ' gave it ' + r[by] });
     }).join('') + (wait.length > 5 ? emptyHTML('more_horiz', (wait.length - 5) + ' more in your lists') : '');
   }
-  const nb = $('navBadge'); nb.hidden = !wait.length; nb.textContent = wait.length;
-  const av = $('meAv');
-  if (S.me !== null) { av.className = 'av'; av.textContent = initial(S.data.people[S.me]); $('meBtn').setAttribute('aria-label', 'On this phone: ' + S.data.people[S.me] + '. Tap to change'); }
-  else { av.className = 'av none'; av.innerHTML = '<span class="ms" aria-hidden="true" style="font-size:18px">person</span>'; $('meBtn').setAttribute('aria-label', 'Who is on this phone'); }
-  $('shareBtn').hidden = S.mode !== 'cloud';
 
   /* list cards */
   $('catCount').textContent = plural(S.data.cats.length, 'list');
@@ -192,13 +188,27 @@ export function revealTab(smooth) {
 }
 
 /* ---------- everything */
-export function render() {
-  const today = todayISO();
-  if (!cat(S.tab)) S.tab = S.data.cats[0].id;
+/* the bits that are always on screen: top bar, tab bar, badge, avatar */
+function renderChrome() {
+  if (S.data.palette && document.documentElement.getAttribute('data-palette') !== S.data.palette) applyPalette(S.data.palette);
   qa('.nav button').forEach((b) => { if (b.getAttribute('data-page') === S.page) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   $('pgSummary').hidden = S.page !== 'summary'; $('pgLists').hidden = S.page !== 'lists'; $('pgPlan').hidden = S.page !== 'plan';
   $('fab').hidden = S.page === 'plan';
-  renderSummary(today); renderLists(today); renderPlan();
+  const wait = waiting().length, nb = $('navBadge'); nb.hidden = !wait; nb.textContent = wait;
+  const av = $('meAv');
+  if (S.me !== null) { av.className = 'av'; av.textContent = initial(S.data.people[S.me]); $('meBtn').setAttribute('aria-label', 'On this phone: ' + S.data.people[S.me] + '. Tap to change'); }
+  else { av.className = 'av none'; av.innerHTML = '<span class="ms" aria-hidden="true" style="font-size:18px">person</span>'; $('meBtn').setAttribute('aria-label', 'Who is on this phone'); }
+  $('shareBtn').hidden = S.mode !== 'cloud';
+}
+
+/* only the page you're looking at is redrawn, which keeps things quick */
+export function render() {
+  const today = todayISO();
+  if (!cat(S.tab)) S.tab = S.data.cats[0].id;
+  renderChrome();
+  if (S.page === 'summary') renderSummary(today);
+  else if (S.page === 'lists') renderLists(today);
+  else renderPlan();
   S.newId = null;
   if (S.page === 'lists') positionInd();
   setStatus();

@@ -33,11 +33,12 @@ export function flatten(d) {
   const o = {
     'meta.startedAt': d.startedAt, 'meta.people': d.people.slice(0, 2),
     'meta.pins': (d.pins || [null, null]).slice(0, 2), 'meta.pinSalt': d.pinSalt || null, 'meta.seq': d.seq || 0,
+    'meta.palette': d.palette || null,
   };
   d.cats.forEach((c, i) => { o['cats.' + c.id] = { name: c.name, icon: c.icon, order: i }; });
   d.items.forEach((it) => { o['items.' + it.id] = cleanItem(it); });
   (d.busy || []).forEach((b, i) => { if (b) o['busy.' + i] = { at: b.at || 0, until: b.until || 0, blocks: [].concat.apply([], b.blocks || []), src: (b.src || []).slice() }; });
-  (d.plans || []).forEach((p) => { o['plans.' + p.id] = { title: p.title, itemId: p.itemId || null, start: p.start, end: p.end, by: p.by, added: (p.added || [null, null]).slice(0, 2) }; });
+  (d.plans || []).forEach((p) => { o['plans.' + p.id] = { title: p.title, itemId: p.itemId || null, catId: p.catId || null, start: p.start, end: p.end, by: p.by, added: (p.added || [null, null]).slice(0, 2) }; });
   return o;
 }
 export function unflatten(o) {

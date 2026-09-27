@@ -9,7 +9,7 @@ import { S, normalize, otherOf } from './state.js';
 import * as sync from './store.js';
 import { render, setStatus, revealTab } from './render.js';
 import { M, initRipple, entrance } from './motion.js';
-import { initSnack, showSnack } from './dialogs.js';
+import { initSnack, showSnack, initSheetDrag } from './dialogs.js';
 import { initActions, commit, redraw, onScroll } from './actions.js';
 import { initItemSheet } from './item-sheet.js';
 import { initListSheet } from './list-sheet.js';
@@ -197,7 +197,7 @@ function initShare() {
 /* ---------- go */
 async function boot() {
   applyLabels();
-  initRipple(); initPalette(); initSnack(commit);
+  initRipple(); initPalette(); initSnack(commit); initSheetDrag();
   initActions(); initItemSheet(); initListSheet(); initRating(); initPeople();
   initWelcome(); initShare(); initSwitchBoard(); initPlanner();
   outlookResult = handleGoogleReturn() || await handleOutlookReturn();   // back from a calendar sign-in?

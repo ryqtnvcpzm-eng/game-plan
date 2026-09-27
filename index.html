@@ -21,7 +21,7 @@
 <script>
   /* VERSION: change this whenever you upload new files, so every phone
      loads the new ones instead of old copies saved in the browser. */
-  var VERSION = '2026-09-27e';
+  var VERSION = '2026-09-27f';
   (function () {
     var files = ['config', 'calendar-config', 'util', 'state', 'store', 'motion', 'render', 'dialogs', 'actions',
       'item-sheet', 'list-sheet', 'rating', 'people', 'palette', 'calendar', 'planner', 'main'];
@@ -184,8 +184,8 @@
     <!-- ============ PLAN ============ -->
     <section class="page" id="pgPlan" aria-label="Plan" hidden>
       <header class="page-head">
-        <h1 class="title">Plan a date.</h1>
-        <p class="lede">Times you’re both free, straight from your calendars.</p>
+        <h1 class="title">Plan</h1>
+        <p class="lede">Pick what you’re in the mood for, then a time you’re both free.</p>
       </header>
       <div class="plan-layout">
         <div class="plan-side">
@@ -196,12 +196,18 @@
           </section>
         </div>
         <section class="card plan-main">
-          <div class="shead"><h2>Suggested times</h2><button type="button" class="icon-btn" id="planSync" aria-label="Refresh my calendar"><span class="ms" aria-hidden="true">refresh</span></button></div>
-          <p class="sub">What for?</p>
-          <div class="chips wrapchips" id="planFor"></div>
+          <div class="shead"><h2>What kind of plan?</h2><button type="button" class="icon-btn" id="planSync" aria-label="Refresh my calendar"><span class="ms" aria-hidden="true">refresh</span></button></div>
+          <div class="kinds" id="planKind"></div>
+          <div id="planWhichWrap">
+            <div id="planWhich" hidden>
+              <p class="sub" id="planWhichLbl">Which one?</p>
+              <div class="chips wrapchips" id="planFor"></div>
+            </div>
+          </div>
           <p class="sub">How long?</p>
           <div class="seg" id="planDur" role="radiogroup" aria-label="How long"></div>
           <p class="banner plan-note" id="planNote" hidden></p>
+          <div class="shead slots-head"><h2>Suggested times</h2><span id="slotsFor"></span></div>
           <div id="slots"></div>
         </section>
       </div>

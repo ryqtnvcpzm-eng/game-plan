@@ -39,6 +39,7 @@ export function snap() {
   return m;
 }
 export function flip(before) {
+  if (reduce) return;
   qa('.item[data-id]').forEach((li) => {
     const id = li.getAttribute('data-id'), r = li.getBoundingClientRect();
     if (!r.height) return;
