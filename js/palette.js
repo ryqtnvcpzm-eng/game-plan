@@ -7,6 +7,9 @@ import { $, qa, esc, store } from './util.js';
 import { anim, reduce, EMPH_DEC } from './motion.js';
 
 const KEY = 'gp-palette';
+/* swatch colors for the menu (the real colors are in css/theme.css) */
+const SWATCH = { midnight: ['#3d52d5', '#9b4de0'], berry: ['#c2185b', '#ff7a59'], matcha: ['#1f8a3b', '#0fa3a0'], sunset: ['#d14a00', '#e8175d'] };
+const sw = (p) => SWATCH[p.id] || p.swatch;
 
 export function applyPalette(p) {
   if (!CONFIG.palettes.some((x) => x.id === p)) p = CONFIG.defaultPalette;
@@ -20,7 +23,7 @@ function toggle(show) {
 }
 
 export function initPalette() {
-  $('palOpts').innerHTML = CONFIG.palettes.map((p) => '<button type="button" role="menuitemradio" data-pal="' + esc(p.id) + '" class="rp"><span class="sw" style="background:linear-gradient(135deg,' + p.swatch[0] + ' 50%,' + p.swatch[1] + ' 50%)"></span>' + esc(p.name) + '<span class="ms" aria-hidden="true">check</span></button>').join('');
+  $('palOpts').innerHTML = CONFIG.palettes.map((p) => '<button type="button" role="menuitemradio" data-pal="' + esc(p.id) + '" class="rp"><span class="sw" style="background:linear-gradient(135deg,' + sw(p)[0] + ',' + sw(p)[1] + ')"></span>' + esc(p.name) + '<span class="ms" aria-hidden="true">check</span></button>').join('');
   applyPalette(store.get(KEY));
   $('palBtn').addEventListener('click', (e) => { e.stopPropagation(); toggle($('palMenu').hidden); });
   $('palMenu').addEventListener('click', (e) => {

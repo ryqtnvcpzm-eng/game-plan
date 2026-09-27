@@ -136,6 +136,7 @@ export function initActions() {
     slideIn($('hlArea'), dir * 28);
   });
   $('fab').addEventListener('click', () => openItemSheet('add'));
+  qa('[data-add]').forEach((b) => b.addEventListener('click', () => openItemSheet('add')));
   $('doneBox').open = S.doneOpen;
   $('doneBox').addEventListener('toggle', () => { S.doneOpen = $('doneBox').open; saveUI(); });
   window.addEventListener('scroll', onScroll, { passive: true });

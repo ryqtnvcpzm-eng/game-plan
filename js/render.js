@@ -75,6 +75,8 @@ function renderSummary(today) {
   const items = S.data.items, open = items.filter((i) => !i.doneAt), done = items.length - open.length;
   const pct = items.length ? Math.round(done / items.length * 100) : 0;
   setNum($('dayNum'), Math.max(1, daysBetween(S.data.startedAt, today) + 1));
+  const hr = new Date().getHours();
+  $('hello').textContent = (hr < 5 ? 'Good night' : hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + (S.me !== null ? ', ' + S.data.people[S.me] : '') + '.';
   $('since').textContent = 'Since ' + weekday(S.data.startedAt) + ', ' + fmt(S.data.startedAt, true);
   $('ringVal').style.strokeDashoffset = (RING_C * (1 - pct / 100)).toFixed(1);
   $('ringPct').textContent = pct + '%';
@@ -119,7 +121,7 @@ function renderSummary(today) {
   /* priorities bar */
   const counts = [0, 0, 0, 0]; open.forEach((i) => { counts[i.pr]++; });
   const segs = qa('#pbar span'), lg = qa('#legend b');
-  [3, 2, 1, 0].forEach((lv, k) => { segs[k].style.flexGrow = counts[lv]; segs[k].hidden = !counts[lv]; lg[k].textContent = counts[lv]; });
+  [3, 2, 1, 0].forEach((lv, k) => { segs[k].style.flexGrow = counts[lv]; segs[k].hidden = !counts[lv]; lg[k].textContent = counts[lv]; lg[k].parentNode.style.setProperty('--w', (open.length ? counts[lv] / open.length * 100 : 0) + '%'); });
   $('pbar').hidden = !open.length;
   const flagged = counts[1] + counts[2] + counts[3];
   $('prCount').textContent = open.length ? flagged + ' of ' + open.length + ' flagged' : '';
