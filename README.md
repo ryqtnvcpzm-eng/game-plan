@@ -112,9 +112,17 @@ Signing in again after that is a quick tap, and those limits come from Google an
 | Rules for averages, whose turn it is, sorting | `js/state.js` |
 | Your starting data | `data/seed.json` (only used when a board is first created) |
 
+**After uploading any change,** also open `index.html` and change the `VERSION` line near the top (any new text works, like today's date). That makes every phone load the new files instead of old saved copies.
+
 **Asking Claude for a change:** describe what you want and paste the file(s) from the table above. You usually only need to replace that one file on GitHub: open it, click the pencil, paste, and commit. The site updates within a minute or two. Your data lives in Firebase, so updating the code never touches your lists.
 
 ---
+
+## Home-screen app
+- The board is part of the address (`…/game-plan/?b=…`). That's on purpose: a home-screen app keeps its own storage, separate from the browser, so the address is how it knows which board to open.
+- To add it: open your board in Safari or Chrome (the address should end in `?b=…`), then **Share → Add to Home Screen**.
+- If the home-screen app ever shows the welcome screen, tap **Paste** with your board link copied, or use **Open a different board link** from the avatar menu.
+- The app checks for a newer version each time it opens or comes back to the front, and switches to it automatically.
 
 ## Good to know
 - **Offline:** changes made without signal are kept and sync when you're back online.

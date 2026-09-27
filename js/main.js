@@ -33,18 +33,48 @@ function applyLabels() {
   [3, 2, 1, 0].forEach((lv, k) => { if (lg[k]) lg[k].childNodes[1].textContent = CONFIG.filterNames[lv]; });
 }
 
-/* ---------- board link: https://you.github.io/game-plan/#k=BOARDKEY */
+/* ---------- board link: https://you.github.io/game-plan/?b=BOARDKEY  (old #k= links still work)
+   The key stays in the address bar on purpose: when you "Add to Home Screen",
+   the phone saves that address, so the home-screen app opens the right board
+   even though it doesn't share storage with the browser. */
 function keyFrom(text) {
   const t = String(text || '').trim();
-  const m = t.match(/k=([A-Za-z0-9_-]{16,})/) || t.match(/^([A-Za-z0-9_-]{16,})$/);
+  const m = t.match(/[?#&](?:b|k)=([A-Za-z0-9_-]{16,})/) || t.match(/^([A-Za-z0-9_-]{16,})$/);
   return m ? m[1] : null;
 }
 function boardFromURL() {
-  const k = keyFrom(location.hash);
-  if (k) { store.set(BOARD_KEY, k); history.replaceState(null, '', location.pathname + location.search); }
+  const k = keyFrom(location.search) || keyFrom(location.hash);
+  if (k) store.set(BOARD_KEY, k);
   return store.get(BOARD_KEY);
 }
-export function shareLink() { return location.origin + location.pathname + '#k=' + store.get(BOARD_KEY); }
+function keepKeyInURL() {
+  const k = store.get(BOARD_KEY);
+  const want = location.pathname + (k ? '?b=' + k : '');
+  if (location.pathname + location.search + location.hash !== want) history.replaceState(null, '', want);
+}
+const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+
+/* ---------- always run the newest version
+   Home-screen apps can keep an old copy of the page for a long time.
+   On open (and whenever the app comes back to the front) we ask the server
+   which VERSION is current; if it's newer, we reload into it. */
+let lastCheck = 0;
+async function checkForUpdate() {
+  if (Date.now() - lastCheck < 10e3) return;
+  lastCheck = Date.now();
+  try {
+    const r = await fetch(location.pathname + '?vcheck=' + Date.now(), { cache: 'no-store' });
+    const m = (await r.text()).match(/var VERSION = '([^']+)'/);
+    if (!m || !window.VERSION || m[1] === window.VERSION) return;
+    if (sessionStorage.getItem('gp-updated-to') === m[1]) return;          // never loop
+    if ([].some.call(document.querySelectorAll('dialog'), (d) => d.open)) return;   // not mid-edit
+    sessionStorage.setItem('gp-updated-to', m[1]);
+    sync.flush();
+    const k = store.get(BOARD_KEY);
+    setTimeout(() => location.replace(location.pathname + '?' + (k ? 'b=' + k + '&' : '') + 'v=' + encodeURIComponent(m[1])), 300);
+  } catch (e) { /* offline: try again later */ }
+}
+export function shareLink() { return location.origin + location.pathname + '?b=' + store.get(BOARD_KEY); }
 
 async function loadSeed() {
   try { const r = await fetch('data/seed.json', { cache: 'no-store' }); if (r.ok) return normalize(await r.json()); } catch (e) {}
@@ -56,9 +86,16 @@ function busy(on, text) { $('wChoices').hidden = on; $('wBusy').hidden = !on; if
 function showWelcome(err) {
   $('app').hidden = true; $('welcome').hidden = false; busy(false);
   $('wErr').hidden = !err; $('wErr').textContent = err || '';
+  /* in the home-screen app, joining is almost always what's wanted: starting a
+     new board there would create a second, separate board */
+  const app = isStandalone();
+  $('wStartBox').hidden = app; $('wNew').hidden = !app;
+  $('wText').textContent = app ? 'Paste the board link you were sent (or the one from your browser) to open your shared board here.'
+    : 'Start your shared board, or open the link your partner sent you.';
 }
 function showApp() {
   $('welcome').hidden = true; $('app').hidden = false;
+  if (S.mode === 'cloud') keepKeyInURL();
   render(); M.painted = true;
   if (S.page === 'lists') revealTab(false);
   onScroll();
@@ -121,6 +158,11 @@ function initWelcome() {
       connectBoard(key);
     } catch (err) { console.error(err); showWelcome(errorText(err)); }
   });
+  $('wNew').addEventListener('click', () => { $('wStartBox').hidden = false; $('wNew').hidden = true; });
+  $('wPaste').addEventListener('click', async () => {
+    try { const t = await navigator.clipboard.readText(); $('wLink').value = t; if (keyFrom(t)) $('wJoin').click(); else showWelcome('That doesn’t look like a board link. Copy the whole link and try again.'); }
+    catch (e) { $('wLink').focus(); showWelcome('Couldn’t read the clipboard. Long-press the box and choose Paste.'); }
+  });
   $('wJoin').addEventListener('click', () => {
     const key = keyFrom($('wLink').value);
     if (!key) { showWelcome('That doesn’t look like a board link. Copy the whole link and paste it here.'); return; }
@@ -128,6 +170,18 @@ function initWelcome() {
     connectBoard(key);
   });
   $('wLink').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('wJoin').click(); });
+}
+
+function initSwitchBoard() {
+  $('switchBoard').addEventListener('click', () => {
+    const t = window.prompt('Paste the board link to open on this device:');
+    if (t === null) return;
+    const k = keyFrom(t);
+    if (!k) { showSnack('That doesn’t look like a board link.'); return; }
+    if (k === store.get(BOARD_KEY)) { showSnack('This device is already on that board.'); return; }
+    store.set(BOARD_KEY, k);
+    location.replace(location.pathname + '?b=' + k);
+  });
 }
 
 function initShare() {
@@ -145,7 +199,7 @@ async function boot() {
   applyLabels();
   initRipple(); initPalette(); initSnack(commit);
   initActions(); initItemSheet(); initListSheet(); initRating(); initPeople();
-  initWelcome(); initShare(); initPlanner();
+  initWelcome(); initShare(); initSwitchBoard(); initPlanner();
   outlookResult = handleGoogleReturn() || await handleOutlookReturn();   // back from a calendar sign-in?
   if (outlookResult) { S.page = 'plan'; }
   preloadGoogle();
@@ -153,7 +207,7 @@ async function boot() {
   window.addEventListener('offline', () => { S.offline = true; if (shown) setStatus(); });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') sync.flush();
-    else if (shown) render();   // dates and day counter stay current
+    else { if (shown) render(); checkForUpdate(); }   // dates stay current; pick up new versions
   });
 
   if (!sync.isConfigured()) {
@@ -163,6 +217,7 @@ async function boot() {
     return;
   }
   const key = boardFromURL();
+  checkForUpdate();
   if (!key) { showWelcome(); return; }
   connectBoard(key);
 }

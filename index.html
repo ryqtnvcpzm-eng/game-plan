@@ -21,7 +21,7 @@
 <script>
   /* VERSION: change this whenever you upload new files, so every phone
      loads the new ones instead of old copies saved in the browser. */
-  var VERSION = '2026-09-27c';
+  var VERSION = '2026-09-27e';
   (function () {
     var files = ['config', 'calendar-config', 'util', 'state', 'store', 'motion', 'render', 'dialogs', 'actions',
       'item-sheet', 'list-sheet', 'rating', 'people', 'palette', 'calendar', 'planner', 'main'];
@@ -43,10 +43,16 @@
     <p id="wText">Start your shared board, or open the link your partner sent you.</p>
     <p class="w-err" id="wErr" role="alert" hidden></p>
     <div id="wChoices">
-      <button type="button" class="btn filled big" id="wStart">Start our board</button>
-      <div class="w-or">or</div>
-      <div class="field"><input id="wLink" placeholder=" " autocomplete="off"><label for="wLink">Paste the link you were sent</label></div>
-      <button type="button" class="btn tonal big" id="wJoin">Join board</button>
+      <div class="w-start" id="wStartBox">
+        <button type="button" class="btn filled big" id="wStart">Start our board</button>
+        <div class="w-or">or</div>
+      </div>
+      <div class="field"><input id="wLink" placeholder=" " autocomplete="off" inputmode="url"><label for="wLink">Paste your board link</label></div>
+      <div class="w-join">
+        <button type="button" class="btn tonal big" id="wPaste"><span class="ms" aria-hidden="true">content_paste</span>Paste</button>
+        <button type="button" class="btn tonal big" id="wJoin">Open board</button>
+      </div>
+      <button type="button" class="btn text w-new" id="wNew" hidden>Start a brand-new board instead</button>
     </div>
     <p class="w-busy" id="wBusy" hidden><span class="spin" aria-hidden="true"></span><span id="wBusyText">Connecting…</span></p>
   </div>
@@ -71,7 +77,7 @@
         <button type="button" class="icon-btn" id="palBtn" aria-label="Change colors" aria-haspopup="true" aria-expanded="false"><span class="ms" aria-hidden="true">palette</span></button>
         <button type="button" class="me-btn" id="meBtn" aria-label="Who is on this phone"><span class="av none" id="meAv"><span class="ms" aria-hidden="true">person</span></span></button>
         <div class="menu" id="palMenu" role="menu" hidden>
-          <p>Accent color on this device</p>
+          <p>Color for both of you</p>
           <div id="palOpts"></div>
         </div>
       </div>
@@ -276,6 +282,7 @@
     <p>So the list knows whose turn it is to rate. Each person has their own PIN, so nobody can pick the other by accident.</p>
     <div class="who-opts" id="whoOpts" role="radiogroup" aria-labelledby="whoTitle"></div>
     <div class="alert-actions split"><button type="button" class="btn text" id="changePin" hidden>Change my PIN</button><span></span><button type="button" class="btn text" id="whoLater">Not now</button></div>
+    <button type="button" class="btn text w-switch" id="switchBoard"><span class="ms" aria-hidden="true">link</span>Open a different board link</button>
   </dialog>
   <dialog class="alert pin" id="pinDlg" aria-labelledby="pinTitle" aria-describedby="pinSub">
     <span class="ms ai" aria-hidden="true" style="color:var(--primary)">lock</span>

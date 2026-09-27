@@ -402,6 +402,11 @@ dialog { color: var(--text); }
 .w-card .field { text-align: left; }
 .w-or { display: flex; align-items: center; gap: 12px; margin: 22px 0; font-size: 13px; color: var(--text-3); }
 .w-or::before, .w-or::after { content: ""; flex: 1; height: 0.5px; background: var(--sep); }
+.w-join { display: flex; gap: 8px; }
+.w-join #wPaste { flex: 0 0 auto; width: auto; padding: 0 18px; }
+.w-new { margin-top: 18px; }
+.w-switch { margin: 10px auto 0; font-size: 14px; }
+.w-switch .ms { font-size: 18px; }
 .w-busy { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 8px 0 0; color: var(--text-2); font-size: 15px; }
 .spin { width: 20px; height: 20px; border-radius: 50%; border: 2.5px solid var(--fill); border-top-color: var(--accent); animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
