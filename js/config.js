@@ -7,12 +7,12 @@ export const CONFIG = {
   /* 1. Firebase keys (from Firebase console > Project settings > Your apps).
         Leave apiKey empty to run in "this phone only" mode. */
   firebase: {
-    apiKey: '',
-    authDomain: '',
-    projectId: '',
-    storageBucket: '',
-    messagingSenderId: '',
-    appId: '',
+    apiKey: 'AIzaSyAVVl5eRiEFHN6IzwvThrgah_79JM34cEg',
+    authDomain: 'the-game-plan-e06d1.firebaseapp.com',
+    projectId: 'the-game-plan-e06d1',
+    storageBucket: 'the-game-plan-e06d1.firebasestorage.app',
+    messagingSenderId: '22984149058',
+    appId: '1:22984149058:web:e475e58fc387d0a5f805db',
   },
 
   /* 2. Words at the top of the app */
