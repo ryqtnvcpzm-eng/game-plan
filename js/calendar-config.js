@@ -6,7 +6,7 @@
 export const CAL = {
 
   /* 1. Keys from setup (README, "Calendars"). Leave one empty to hide that option. */
-  googleClientId: '',     // looks like 1234-abcd.apps.googleusercontent.com
+  googleClientId: '22984149058-7ltep1q9fr34jcn6hlgs9mcg9vffuvnd.apps.googleusercontent.com',     // looks like 1234-abcd.apps.googleusercontent.com
   outlookClientId: '',    // looks like 1a2b3c4d-....  (Application (client) ID)
 
   /* 2. When dates can happen, in your phone's local time. Several ranges per day are fine. */
