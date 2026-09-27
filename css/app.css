@@ -212,8 +212,12 @@ button:not(:disabled) { cursor: pointer; }
 .lactions { display: flex; gap: 2px; flex: none; }
 
 /* ---------- rows (grouped list, like Reminders) */
-.list { list-style: none; margin: 0; padding: 0; background: var(--card); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); isolation: isolate; -webkit-mask-image: -webkit-radial-gradient(white, black); }
-.list.flush { -webkit-mask-image: none; }
+/* no overflow clipping or masks on these cards: on iPhone that made long lists
+   paint blank while scrolling. The first and last rows round their own corners instead. */
+.list { list-style: none; margin: 0; padding: 0; background: var(--card); border-radius: 18px; box-shadow: var(--shadow); }
+.list > :first-child { border-top-left-radius: 18px; border-top-right-radius: 18px; }
+.list > :last-child { border-bottom-left-radius: 18px; border-bottom-right-radius: 18px; }
+.list.flush > * { border-radius: 12px; }
 .list.flush { box-shadow: none; background: transparent; border-radius: 0; margin: 0 -8px; }
 .list:empty { display: none; }
 .item:active { background: var(--fill-2); }
@@ -508,7 +512,7 @@ dialog { color: var(--text); }
   .cat { min-height: 160px; padding: 20px; }
 
   /* lists: sidebar + main, like Reminders on the Mac */
-  .lists-page:not([hidden]) { display: grid; grid-template-columns: 260px 1fr; gap: 36px; align-items: start; padding-top: 28px; }
+  .lists-page:not([hidden]) { display: grid; grid-template-columns: 260px 1fr; gap: 0 36px; align-items: start; padding-top: 28px; }
   .lists-page .side { top: 80px; margin: 0; padding: 14px 10px; background: var(--card); border-radius: 22px; box-shadow: var(--shadow); -webkit-backdrop-filter: none; backdrop-filter: none; }
   .lists-page .side.stuck { box-shadow: var(--shadow); }
   .side-label { display: block; margin: 8px 10px 6px; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; color: var(--text-3); }

@@ -116,7 +116,7 @@ export function onScroll() {
 function watchSticky() {
   const st = $('sticky'); if (!st || !window.IntersectionObserver) return;
   const probe = document.createElement('div');
-  probe.style.cssText = 'height:1px;margin-bottom:-1px;pointer-events:none';
+  probe.style.cssText = 'grid-column:1/-1;height:0;pointer-events:none';   // spans the whole row, so it never takes a column
   st.parentNode.insertBefore(probe, st);
   new IntersectionObserver(([e]) => st.classList.toggle('stuck', !e.isIntersecting && e.boundingClientRect.top < 80), { rootMargin: '-60px 0px 0px 0px' }).observe(probe);
 }
