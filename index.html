@@ -9,22 +9,24 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="format-detection" content="telephone=no">
 <meta name="apple-mobile-web-app-title" content="Game Plan">
+<meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.pexels.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
 <script>
-  /* VERSION: change this whenever you upload new files, so every phone
+  /* VERSION: change this whenever you upload new files, so every device
      loads the new ones instead of old copies saved in the browser. */
-  var VERSION = '2026-09-27g';
+  var VERSION = '2026-09-28a';
   (function () {
-    var files = ['config', 'calendar-config', 'util', 'state', 'store', 'motion', 'render', 'dialogs', 'actions',
-      'item-sheet', 'list-sheet', 'rating', 'people', 'palette', 'calendar', 'planner', 'main'];
+    var files = ['config', 'calendar-config', 'util', 'state', 'store', 'calendar', 'motion', 'images', 'router',
+      'dialogs', 'rows', 'render', 'actions', 'item-sheet', 'list-sheet', 'rating', 'people', 'palette', 'planner',
+      'view-home', 'view-lists', 'view-list', 'view-memories', 'view-settings', 'main'];
     var map = {};
     files.forEach(function (f) { map['./js/' + f + '.js'] = './js/' + f + '.js?v=' + VERSION; });
     var im = document.createElement('script'); im.type = 'importmap'; im.textContent = JSON.stringify({ imports: map });
@@ -35,288 +37,338 @@
 </head>
 <body>
 
-<!-- ============ WELCOME (first open, or no board on this phone) ============ -->
+<!-- ======================= WELCOME ======================= -->
 <section class="welcome" id="welcome" hidden>
-  <div class="w-card">
-    <span class="logo big" aria-hidden="true"></span>
-    <h1 class="w-title" id="wTitle">The Game Plan</h1>
-    <p id="wText">Start your shared board, or open the link your partner sent you.</p>
-    <p class="w-err" id="wErr" role="alert" hidden></p>
+  <div class="welcome-art" aria-hidden="true"><img id="wArt" alt="" decoding="async"></div>
+  <div class="welcome-card">
+    <span class="logo lg" aria-hidden="true"></span>
+    <h1 class="welcome-title" id="wTitle">The Game Plan</h1>
+    <p class="welcome-text" id="wText">Start your shared board, or open the link your partner sent you.</p>
+    <p class="welcome-err" id="wErr" role="alert" hidden></p>
     <div id="wChoices">
-      <div class="w-start" id="wStartBox">
-        <button type="button" class="btn filled big" id="wStart">Start our board</button>
-        <div class="w-or">or</div>
+      <div id="wStartBox">
+        <button type="button" class="btn primary block" id="wStart">Start our board</button>
+        <div class="or">or</div>
       </div>
-      <div class="field"><input id="wLink" placeholder=" " autocomplete="off" inputmode="url"><label for="wLink">Paste your board link</label></div>
-      <div class="w-join">
-        <button type="button" class="btn tonal big" id="wPaste"><span class="ms" aria-hidden="true">content_paste</span>Paste</button>
-        <button type="button" class="btn tonal big" id="wJoin">Open board</button>
+      <label class="field"><span>Your board link</span><input id="wLink" autocomplete="off" inputmode="url" placeholder="https://…"></label>
+      <div class="btn-row">
+        <button type="button" class="btn tinted" id="wPaste"><span class="ms" aria-hidden="true">content_paste</span>Paste</button>
+        <button type="button" class="btn tinted grow" id="wJoin">Open board</button>
       </div>
-      <button type="button" class="btn text w-new" id="wNew" hidden>Start a brand-new board instead</button>
+      <button type="button" class="btn plain small" id="wNew" hidden>Start a brand-new board instead</button>
     </div>
-    <p class="w-busy" id="wBusy" hidden><span class="spin" aria-hidden="true"></span><span id="wBusyText">Connecting…</span></p>
+    <p class="welcome-busy" id="wBusy" hidden><span class="spinner" aria-hidden="true"></span><span id="wBusyText">Connecting…</span></p>
   </div>
 </section>
 
-<!-- ============ THE APP ============ -->
-<div id="app" hidden>
+<!-- ======================= APP ======================= -->
+<div class="app" id="app" hidden>
 
-  <!-- Top bar. Desktop: brand, page switcher, controls. Phone: brand + controls, page switcher moves to the bottom. -->
-  <header class="topbar">
+  <!-- Top bar: always fixed in place. -->
+  <header class="topbar" id="topbar">
     <div class="topbar-in">
-      <span class="brand"><span class="logo" aria-hidden="true"></span><span id="appName">The Game Plan</span></span>
-      <nav class="nav" aria-label="Pages">
-        <button type="button" data-page="summary"><span class="ind"><span class="ms" aria-hidden="true">space_dashboard</span><span class="badge" id="navBadge" hidden></span></span><span class="lbl">Summary</span></button>
-        <button type="button" data-page="lists"><span class="ind"><span class="ms" aria-hidden="true">checklist</span></span><span class="lbl">Lists</span></button>
-        <button type="button" data-page="plan"><span class="ind"><span class="ms" aria-hidden="true">calendar_month</span></span><span class="lbl">Plan</span></button>
-      </nav>
-      <div class="bar-actions">
-        <p class="status" id="status" aria-live="polite"></p>
-        <button type="button" class="pill-btn desk-only" data-add><span class="ms" aria-hidden="true">add</span>New</button>
-        <button type="button" class="icon-btn" id="shareBtn" aria-label="Share the link" hidden><span class="ms" aria-hidden="true">ios_share</span></button>
-        <button type="button" class="icon-btn" id="palBtn" aria-label="Change colors" aria-haspopup="true" aria-expanded="false"><span class="ms" aria-hidden="true">palette</span></button>
-        <button type="button" class="me-btn" id="meBtn" aria-label="Who is on this phone"><span class="av none" id="meAv"><span class="ms" aria-hidden="true">person</span></span></button>
-        <div class="menu" id="palMenu" role="menu" hidden>
-          <p>Color for both of you</p>
-          <div id="palOpts"></div>
-        </div>
+      <div class="tb-left">
+        <a class="brand" href="#/" id="brand" aria-label="Home"><span class="logo" aria-hidden="true"></span><span class="brand-name" id="appName">The Game Plan</span></a>
+        <a class="back" href="#/lists" id="backBtn" hidden><span class="ms" aria-hidden="true">chevron_left</span><span id="backLabel">Lists</span></a>
       </div>
+      <p class="tb-title" id="tbTitle" aria-hidden="true"></p>
+      <nav class="tabs" id="tabs" aria-label="Sections">
+        <a href="#/" data-tab="home"><span class="ms" aria-hidden="true">home</span><span class="lbl">Home</span></a>
+        <a href="#/lists" data-tab="lists"><span class="ms" aria-hidden="true">checklist</span><span class="lbl">Lists</span></a>
+        <a href="#/plan" data-tab="plan"><span class="ms" aria-hidden="true">calendar_month</span><span class="lbl">Plan</span></a>
+        <a href="#/memories" data-tab="memories"><span class="ms" aria-hidden="true">auto_awesome</span><span class="lbl">Memories</span><span class="badge" id="tabBadge" hidden></span></a>
+      </nav>
+      <div class="tb-right">
+        <span class="sync" id="sync" aria-live="polite"></span>
+        <button type="button" class="btn primary small desk" data-add><span class="ms" aria-hidden="true">add</span>New</button>
+        <button type="button" class="icon-btn" id="moreBtn" aria-label="List options" hidden><span class="ms" aria-hidden="true">more_horiz</span></button>
+        <a class="avatar-btn" href="#/settings" id="meBtn" aria-label="Settings"><span class="avatar" id="meAv"></span></a>
+      </div>
+    </div>
+    <!-- extra row, only on a list's page (phones): the priority filter stays frozen here -->
+    <div class="subbar" id="subbar" hidden>
+      <div class="chips scroll" id="subFilters" role="group" aria-label="Filter by priority"></div>
     </div>
   </header>
 
-  <main class="wrap">
+  <main class="main" id="main">
 
-    <!-- ============ SUMMARY ============ -->
-    <section class="page" id="pgSummary" aria-label="Summary">
-      <header class="hero">
-        <div class="hero-text">
-          <p class="eyebrow" id="hello"></p>
-          <h1 class="display"><span class="grad">Day <span class="num" id="dayNum">1</span></span></h1>
-          <p class="lede"><span id="tagline">Everything we want to do together</span>.</p>
-          <p class="since" id="since"></p>
+    <!-- HOME -->
+    <section class="view" id="v-home" data-view="home" hidden>
+      <div class="home-grid">
+        <article class="hero" id="homeHero">
+          <img class="hero-img" id="homeHeroImg" alt="" decoding="async">
+          <div class="hero-shade" aria-hidden="true"></div>
+          <div class="hero-content">
+            <p class="hero-eyebrow" id="homeHello"></p>
+            <h1 class="hero-title">Day <span class="num" id="homeDay">1</span></h1>
+            <p class="hero-sub" id="homeSince"></p>
+          </div>
+          <div class="hero-ring" id="homeRing" role="img" aria-label="">
+            <svg viewBox="0 0 44 44" aria-hidden="true"><circle class="trk" cx="22" cy="22" r="18"/><circle class="val" id="homeRingVal" cx="22" cy="22" r="18" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/></svg>
+            <span id="homeRingPct">0%</span>
+          </div>
+        </article>
+
+        <div class="home-side">
+          <div class="stats">
+            <a class="stat" href="#/lists"><span class="stat-label">To do</span><span class="stat-num" id="statTodo">0</span></a>
+            <a class="stat" href="#/memories"><span class="stat-label">Crossed off</span><span class="stat-num" id="statDone">0</span></a>
+            <a class="stat" href="#/memories"><span class="stat-label">Avg rating</span><span class="stat-num"><span id="statAvg">–</span><span class="ms fill star" aria-hidden="true">star</span></span></a>
+          </div>
+          <a class="card next-plan" id="homeNext" href="#/plan"></a>
         </div>
-        <div class="ring" role="img" id="ring" aria-label="">
-          <svg viewBox="0 0 104 104" aria-hidden="true">
-            <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" class="g1"/><stop offset="1" class="g2"/></linearGradient></defs>
-            <circle class="trk" cx="52" cy="52" r="42"/><circle class="val" id="ringVal" cx="52" cy="52" r="42" stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
-          </svg>
-          <div class="pct"><span id="ringPct">0%</span><small>crossed off</small></div>
-        </div>
-      </header>
 
-      <p class="banner" id="localBanner" hidden><span class="ms" aria-hidden="true">cloud_off</span><span>Not connected yet, so changes only stay on this device. Add your Firebase keys to js/config.js to sync.</span></p>
-
-      <dl class="tiles">
-        <div class="tile"><dt>To do</dt><dd id="toGo">0</dd></div>
-        <div class="tile"><dt>Crossed off</dt><dd id="doneAll">0</dd></div>
-        <div class="tile"><dt>Avg rating</dt><dd><span id="avgR">–</span><span class="ms fill star" aria-hidden="true">star</span></dd></div>
-      </dl>
-
-      <section class="turn-card" id="turnCard" hidden>
-        <div class="turn-head"><span class="ms fill" aria-hidden="true">star_half</span><div><h2 id="turnTitle"></h2><p id="turnSub"></p></div></div>
-        <ul class="list" id="turnList"></ul>
-      </section>
-
-      <div class="bento">
-        <section class="card span-12">
-          <div class="shead"><h2>Our lists</h2><span id="catCount"></span></div>
-          <div class="cats" id="cats"></div>
+        <section class="turn" id="homeTurn" hidden>
+          <div class="turn-head">
+            <span class="ms fill" aria-hidden="true">star_half</span>
+            <div><h2 id="homeTurnTitle"></h2><p id="homeTurnText"></p></div>
+          </div>
+          <ul class="rows" id="homeTurnRows"></ul>
         </section>
-        <section class="card span-5">
-          <div class="shead"><h2>Priorities</h2><span id="prCount"></span></div>
-          <div class="pbar" id="pbar"><span class="c3"></span><span class="c2"></span><span class="c1"></span><span class="c0"></span></div>
-          <div class="legend" id="legend">
-            <div><i class="c3"></i>Top<b></b></div>
-            <div><i class="c2"></i>Next up<b></b></div>
-            <div><i class="c1"></i>Soon<b></b></div>
-            <div><i class="c0"></i>No rush<b></b></div>
-          </div>
+
+        <section class="block up-next">
+          <div class="block-head"><h2>Up next</h2><a class="link" href="#/lists">All lists</a></div>
+          <ul class="rows card-rows" id="homeUpNext"></ul>
         </section>
-        <section class="card span-7">
-          <div class="shead"><h2>Highlights</h2><span id="hlCount"></span></div>
-          <div class="seg sumseg" id="sumSeg" role="radiogroup" aria-label="Highlights">
-            <button type="button" role="radio" data-s="up">Up next</button>
-            <button type="button" role="radio" data-s="rated">Top rated</button>
-            <button type="button" role="radio" data-s="recent">Recent</button>
-          </div>
-          <div id="hlArea">
-            <ul class="list flush" id="upNext"></ul>
-            <ul class="list flush" id="topRated"></ul>
-            <ul class="list flush" id="recentDone"></ul>
-          </div>
+
+        <section class="block home-lists">
+          <div class="block-head"><h2>Your lists</h2><button type="button" class="link" data-newlist>New list</button></div>
+          <div class="list-cards compact" id="homeLists"></div>
+        </section>
+
+        <section class="block recent">
+          <div class="block-head"><h2>Recently crossed off</h2><a class="link" href="#/memories">Memories</a></div>
+          <ul class="rows card-rows" id="homeRecent"></ul>
         </section>
       </div>
     </section>
 
-    <!-- ============ LISTS ============ -->
-    <section class="page lists-page" id="pgLists" aria-label="Lists" hidden>
-      <aside class="side" id="sticky">
-        <p class="side-label">My lists</p>
-        <div class="tabs-scroll" id="tabsScroll">
-          <div class="tabs" id="tabs" role="tablist" aria-label="Lists"></div>
-          <span class="tab-ind" id="tabInd" aria-hidden="true"></span>
-        </div>
-        <p class="side-label">Priority</p>
-        <div class="chips" id="filters" role="group" aria-label="Filter by priority">
-          <button type="button" class="fchip" data-f="all" aria-pressed="false"><span class="ms ck" aria-hidden="true">check</span>All<span class="fc"></span></button>
-          <button type="button" class="fchip" data-f="3" aria-pressed="false"><span class="ms ck" aria-hidden="true">check</span>Top<span class="fc"></span></button>
-          <button type="button" class="fchip" data-f="2" aria-pressed="false"><span class="ms ck" aria-hidden="true">check</span>Next up<span class="fc"></span></button>
-          <button type="button" class="fchip" data-f="1" aria-pressed="false"><span class="ms ck" aria-hidden="true">check</span>Soon<span class="fc"></span></button>
-          <button type="button" class="fchip" data-f="0" aria-pressed="false"><span class="ms ck" aria-hidden="true">check</span>No rush<span class="fc"></span></button>
-        </div>
-      </aside>
-      <div class="main" id="listArea">
-        <div class="lhead">
-          <div><h1 class="list-title" id="listTitle"></h1><p id="listCount"></p></div>
-          <div class="lactions">
-            <button type="button" class="icon-btn" id="editCat" aria-label="Edit this list"><span class="ms" aria-hidden="true">edit</span></button>
-            <button type="button" class="icon-btn" id="delCat" aria-label="Delete this list"><span class="ms" aria-hidden="true">delete</span></button>
-          </div>
-        </div>
-        <ul class="list" id="openList"></ul>
-        <details class="done" id="doneBox">
-          <summary><h2>Crossed off</h2><span class="right"><span id="doneN"></span><span class="ms" aria-hidden="true">expand_more</span></span></summary>
-          <ul class="list" id="doneList"></ul>
-        </details>
-      </div>
-    </section>
-
-    <!-- ============ PLAN ============ -->
-    <section class="page" id="pgPlan" aria-label="Plan" hidden>
+    <!-- LISTS (all lists) -->
+    <section class="view" id="v-lists" data-view="lists" hidden>
       <header class="page-head">
-        <h1 class="title">Plan</h1>
-        <p class="lede">Pick what you’re in the mood for, then a time you’re both free.</p>
+        <h1 class="page-title">Lists</h1>
+        <button type="button" class="btn tinted small" data-newlist><span class="ms" aria-hidden="true">add</span>New list</button>
+      </header>
+      <div class="smart" id="smartLists"></div>
+      <h2 class="section-label">My lists</h2>
+      <div class="list-cards" id="allLists"></div>
+    </section>
+
+    <!-- ONE LIST -->
+    <section class="view" id="v-list" data-view="list" hidden>
+      <div class="list-layout">
+        <aside class="list-side" id="listSide">
+          <p class="side-label">Smart lists</p>
+          <nav class="side-nav" id="sideSmart"></nav>
+          <p class="side-label">My lists</p>
+          <nav class="side-nav" id="sideLists"></nav>
+          <p class="side-label">Priority</p>
+          <div class="side-nav" id="sideFilters"></div>
+        </aside>
+        <div class="list-body">
+          <header class="list-banner" id="listBanner">
+            <img class="banner-img" id="listBannerImg" alt="" decoding="async">
+            <div class="banner-shade" aria-hidden="true"></div>
+            <div class="banner-text">
+              <h1 class="banner-title" id="listTitle"></h1>
+              <p class="banner-sub" id="listSub"></p>
+            </div>
+            <div class="banner-actions desk">
+              <button type="button" class="icon-btn on-photo" id="listEdit" aria-label="Edit this list"><span class="ms" aria-hidden="true">edit</span></button>
+              <button type="button" class="icon-btn on-photo" id="listDelete" aria-label="Delete this list"><span class="ms" aria-hidden="true">delete</span></button>
+            </div>
+          </header>
+          <ul class="rows card-rows" id="listRows"></ul>
+          <details class="done-box" id="doneBox">
+            <summary><span>Crossed off</span><span class="done-count"><span id="doneCount"></span><span class="ms" aria-hidden="true">expand_more</span></span></summary>
+            <ul class="rows card-rows" id="doneRows"></ul>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLAN -->
+    <section class="view" id="v-plan" data-view="plan" hidden>
+      <header class="page-head">
+        <div>
+          <h1 class="page-title">Plan</h1>
+          <p class="page-sub">Pick what you’re in the mood for, then a time you’re both free.</p>
+        </div>
       </header>
       <div class="plan-layout">
-        <div class="plan-side">
-          <section class="card cal-card" id="calCard"></section>
-          <section class="card">
-            <div class="shead"><h2>Booked</h2><span id="plansCount"></span></div>
-            <ul class="list flush plans" id="plansList"></ul>
+        <div class="plan-controls">
+          <div class="cal-strip" id="calStrip"></div>
+          <section class="block">
+            <div class="block-head"><h2>What kind of plan?</h2></div>
+            <div class="kinds" id="planKinds"></div>
+          </section>
+          <section class="block" id="planWhichBlock" hidden>
+            <div class="block-head"><h2>Which one?</h2></div>
+            <div class="chips wrap" id="planWhich"></div>
+          </section>
+          <section class="block">
+            <div class="block-head"><h2>How long?</h2></div>
+            <div class="segmented" id="planLength" role="radiogroup" aria-label="How long"></div>
+          </section>
+          <section class="block" id="bookedBlock" hidden>
+            <div class="block-head"><h2>Booked</h2><span class="count" id="bookedCount"></span></div>
+            <ul class="rows card-rows" id="bookedRows"></ul>
           </section>
         </div>
-        <section class="card plan-main">
-          <div class="shead"><h2>What kind of plan?</h2><button type="button" class="icon-btn" id="planSync" aria-label="Refresh my calendar"><span class="ms" aria-hidden="true">refresh</span></button></div>
-          <div class="kinds" id="planKind"></div>
-          <div id="planWhichWrap">
-            <div id="planWhich" hidden>
-              <p class="sub" id="planWhichLbl">Which one?</p>
-              <div class="chips wrapchips" id="planFor"></div>
-            </div>
-          </div>
-          <p class="sub">How long?</p>
-          <div class="seg" id="planDur" role="radiogroup" aria-label="How long"></div>
-          <p class="banner plan-note" id="planNote" hidden></p>
-          <div class="shead slots-head"><h2>Suggested times</h2><span id="slotsFor"></span></div>
+        <section class="block plan-results">
+          <div class="block-head"><h2>Suggested times</h2><button type="button" class="icon-btn" id="planRefresh" aria-label="Refresh calendars"><span class="ms" aria-hidden="true">refresh</span></button></div>
+          <p class="note" id="planNote" hidden></p>
           <div id="slots"></div>
         </section>
       </div>
     </section>
 
+    <!-- MEMORIES -->
+    <section class="view" id="v-memories" data-view="memories" hidden>
+      <header class="memories-hero">
+        <img class="hero-img" id="memHeroImg" alt="" decoding="async">
+        <div class="hero-shade" aria-hidden="true"></div>
+        <div class="hero-content">
+          <h1 class="hero-title sm">Memories</h1>
+          <p class="hero-sub" id="memSub"></p>
+        </div>
+      </header>
+      <div class="segmented wide" id="memTabs" role="radiogroup" aria-label="Show">
+        <button type="button" role="radio" data-m="turn">Your turn</button>
+        <button type="button" role="radio" data-m="top">Top rated</button>
+        <button type="button" role="radio" data-m="all">Everything</button>
+      </div>
+      <ul class="rows card-rows" id="memRows"></ul>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="view" id="v-settings" data-view="settings" hidden>
+      <header class="page-head"><h1 class="page-title">Settings</h1></header>
+      <div class="settings" id="settingsBody"></div>
+    </section>
+
   </main>
 
-  <button type="button" class="fab" id="fab" aria-label="Add something"><span class="ms" aria-hidden="true">add</span><span id="fabLabel">New</span></button>
+  <button type="button" class="fab" id="fab" aria-label="New"><span class="ms" aria-hidden="true">add</span></button>
 
-  <dialog class="sheet" id="sheet" aria-labelledby="sheetTitle">
-    <form id="sheetForm" autocomplete="off">
-      <div class="handle" aria-hidden="true"></div>
-      <h2 id="sheetTitle">Add</h2>
-      <div class="field"><input id="fTitle" maxlength="100" placeholder=" " enterkeyhint="next"><label for="fTitle">What</label></div>
-      <div class="field"><input id="fNote" maxlength="120" placeholder=" " enterkeyhint="done"><label for="fNote">Details (optional)</label></div>
-      <p class="sub" id="fListLabel">List</p>
-      <div class="pick" id="fList" role="radiogroup" aria-labelledby="fListLabel"></div>
-      <p class="sub" id="prLabel">Priority</p>
-      <div class="seg" role="radiogroup" aria-labelledby="prLabel" id="seg">
-        <button type="button" role="radio" data-pr="0"><span class="ms" aria-hidden="true">check</span>None</button>
-        <button type="button" role="radio" data-pr="1"><span class="ms" aria-hidden="true">check</span>Soon</button>
-        <button type="button" role="radio" data-pr="2"><span class="ms" aria-hidden="true">check</span>Next up</button>
-        <button type="button" role="radio" data-pr="3"><span class="ms" aria-hidden="true">check</span>Top</button>
+  <!-- ======================= SHEETS & DIALOGS ======================= -->
+  <dialog class="sheet" id="itemSheet" aria-labelledby="itemTitle">
+    <form method="dialog" id="itemForm" autocomplete="off">
+      <div class="grabber" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <button type="button" class="btn plain" data-close>Cancel</button>
+        <h2 id="itemTitle">New item</h2>
+        <button type="submit" class="btn plain strong" id="itemSave">Add</button>
       </div>
-      <p class="sheet-meta" id="sheetMeta"></p>
-      <button type="button" class="btn tonal find-time" id="findTime"><span class="ms" aria-hidden="true">event</span>Find a time</button>
-      <div class="sheet-actions">
-        <button type="button" class="btn text danger" id="delBtn"><span class="ms" aria-hidden="true">delete</span>Delete</button>
-        <span class="grow"></span>
-        <button type="button" class="btn text" id="cancelBtn">Cancel</button>
-        <button type="submit" class="btn filled" id="saveBtn">Add</button>
-      </div>
-    </form>
-  </dialog>
-  <dialog class="sheet" id="catSheet" aria-labelledby="catTitle">
-    <form id="catForm" autocomplete="off">
-      <div class="handle" aria-hidden="true"></div>
-      <h2 id="catTitle">New list</h2>
-      <div class="field"><input id="cName" maxlength="40" placeholder=" " enterkeyhint="done"><label for="cName">List name</label></div>
-      <p class="sub" id="iconLabel">Icon</p>
-      <div class="icons" id="cIcons" role="radiogroup" aria-labelledby="iconLabel"></div>
-      <div class="sheet-actions">
-        <button type="button" class="btn text danger" id="catDel"><span class="ms" aria-hidden="true">delete</span>Delete list</button>
-        <span class="grow"></span>
-        <button type="button" class="btn text" id="catCancel">Cancel</button>
-        <button type="submit" class="btn filled" id="catSave">Create</button>
+      <div class="sheet-body">
+        <div class="group">
+          <input class="group-input big" id="fTitle" maxlength="100" placeholder="Title" enterkeyhint="next">
+          <input class="group-input" id="fNote" maxlength="140" placeholder="Details (optional)" enterkeyhint="done">
+        </div>
+        <p class="group-label">List</p>
+        <div class="chips wrap" id="fList" role="radiogroup" aria-label="List"></div>
+        <p class="group-label">Priority</p>
+        <div class="segmented" id="fPriority" role="radiogroup" aria-label="Priority"></div>
+        <p class="sheet-meta" id="itemMeta"></p>
+        <div class="group actions" id="itemActions">
+          <button type="button" class="group-btn" id="itemFindTime"><span class="ms" aria-hidden="true">calendar_month</span>Find a time</button>
+          <button type="button" class="group-btn danger" id="itemDelete"><span class="ms" aria-hidden="true">delete</span>Delete</button>
+        </div>
       </div>
     </form>
   </dialog>
+
+  <dialog class="sheet" id="listSheet" aria-labelledby="listSheetTitle">
+    <form method="dialog" id="listForm" autocomplete="off">
+      <div class="grabber" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <button type="button" class="btn plain" data-close>Cancel</button>
+        <h2 id="listSheetTitle">New list</h2>
+        <button type="submit" class="btn plain strong" id="listSave">Create</button>
+      </div>
+      <div class="sheet-body">
+        <div class="list-preview" id="listPreview"><img alt="" id="listPreviewImg" decoding="async"><span class="ms" id="listPreviewIcon" aria-hidden="true">explore</span></div>
+        <div class="group"><input class="group-input big center" id="lName" maxlength="40" placeholder="List name" enterkeyhint="done"></div>
+        <p class="group-label">Icon</p>
+        <div class="icon-grid" id="lIcons" role="radiogroup" aria-label="Icon"></div>
+        <div class="group actions" id="listDangerZone">
+          <button type="button" class="group-btn danger" id="listSheetDelete"><span class="ms" aria-hidden="true">delete</span>Delete list</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
   <dialog class="sheet" id="rateSheet" aria-labelledby="rateTitle">
-    <form id="rateForm" autocomplete="off">
-      <div class="handle" aria-hidden="true"></div>
-      <h2 id="rateTitle">How was it?</h2>
-      <p class="rate-sub">Rate it together, or leave one for later. Tap a name to change it.</p>
-      <div class="rate-row"><input class="who" id="n0" maxlength="16" aria-label="First person"><span class="you" id="you0" hidden>You</span><div class="stars" data-p="0" role="radiogroup" aria-label="First person's rating"></div></div>
-      <div class="rate-row"><input class="who" id="n1" maxlength="16" aria-label="Second person"><span class="you" id="you1" hidden>You</span><div class="stars" data-p="1" role="radiogroup" aria-label="Second person's rating"></div></div>
-      <div class="avg" id="rateAvg"><span class="ms fill" aria-hidden="true">star</span><b id="avgNum">–</b><span id="avgLbl">No ratings yet</span></div>
-      <div class="sheet-actions">
-        <span class="grow"></span>
-        <button type="button" class="btn text" id="rateSkip">Skip</button>
-        <button type="submit" class="btn filled" id="rateSave">Save rating</button>
+    <form method="dialog" id="rateForm">
+      <div class="grabber" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <button type="button" class="btn plain" id="rateSkip">Skip</button>
+        <h2 id="rateHeading">Rate it</h2>
+        <button type="submit" class="btn plain strong" id="rateSave">Save</button>
+      </div>
+      <div class="sheet-body">
+        <p class="rate-q" id="rateTitle">How was it?</p>
+        <div class="group rate-group" id="rateRows"></div>
+        <div class="rate-avg"><span class="ms fill" aria-hidden="true">star</span><b id="rateAvg">–</b><span id="rateAvgLabel">No ratings yet</span></div>
+        <p class="sheet-meta">Rate it together, or leave one for later. The other person will be asked.</p>
       </div>
     </form>
   </dialog>
-  <dialog class="alert" id="confirmDlg" aria-labelledby="confirmTitle" aria-describedby="confirmText">
-    <span class="ms ai" aria-hidden="true">warning</span>
-    <h2 id="confirmTitle">Delete this list?</h2>
+
+  <dialog class="sheet" id="bookSheet" aria-labelledby="bookTitle">
+    <form method="dialog" id="bookForm" autocomplete="off">
+      <div class="grabber" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <button type="button" class="btn plain" data-close>Cancel</button>
+        <h2 id="bookTitle">Add to calendar</h2>
+        <button type="submit" class="btn plain strong" id="bookSave">Add</button>
+      </div>
+      <div class="sheet-body">
+        <p class="book-when" id="bookWhen"></p>
+        <div class="group"><input class="group-input big" id="bName" maxlength="100" placeholder="Event name"></div>
+        <p class="group-label">Calendar</p>
+        <div class="chips wrap" id="bCal" role="radiogroup" aria-label="Calendar"></div>
+        <p class="sheet-meta" id="bookNote"></p>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="alert" id="whoDialog" aria-labelledby="whoTitle">
+    <h2 id="whoTitle">Who’s using this device?</h2>
+    <p>So the app knows whose turn it is to rate. Each of you has a PIN.</p>
+    <div class="who-list" id="whoList"></div>
+    <div class="alert-actions"><button type="button" class="btn plain" id="whoLater">Not now</button></div>
+  </dialog>
+
+  <dialog class="alert pin" id="pinDialog" aria-labelledby="pinTitle">
+    <h2 id="pinTitle">Enter PIN</h2>
+    <p id="pinText"></p>
+    <div class="pin-dots" id="pinDots" aria-hidden="true"></div>
+    <p class="pin-error" id="pinError" role="alert"></p>
+    <div class="keypad" id="keypad"></div>
+    <div class="alert-actions"><button type="button" class="btn plain" id="pinCancel">Cancel</button></div>
+  </dialog>
+
+  <dialog class="alert" id="confirmDialog" aria-labelledby="confirmTitle">
+    <span class="ms alert-icon" aria-hidden="true">warning</span>
+    <h2 id="confirmTitle"></h2>
     <p id="confirmText"></p>
     <ul class="peek" id="confirmPeek"></ul>
-    <div class="alert-actions">
-      <button type="button" class="btn text" id="confirmCancel">Keep list</button>
-      <button type="button" class="btn text warn" id="confirmOk">Delete all</button>
+    <div class="alert-actions stack">
+      <button type="button" class="btn danger-fill block" id="confirmOk">Delete</button>
+      <button type="button" class="btn plain block" id="confirmCancel">Cancel</button>
     </div>
   </dialog>
-  <dialog class="alert who" id="whoDlg" aria-labelledby="whoTitle">
-    <span class="ms ai" aria-hidden="true" style="color:var(--primary)">waving_hand</span>
-    <h2 id="whoTitle">Who’s on this phone?</h2>
-    <p>So the list knows whose turn it is to rate. Each person has their own PIN, so nobody can pick the other by accident.</p>
-    <div class="who-opts" id="whoOpts" role="radiogroup" aria-labelledby="whoTitle"></div>
-    <div class="alert-actions split"><button type="button" class="btn text" id="changePin" hidden>Change my PIN</button><span></span><button type="button" class="btn text" id="whoLater">Not now</button></div>
-    <button type="button" class="btn text w-switch" id="switchBoard"><span class="ms" aria-hidden="true">link</span>Open a different board link</button>
-  </dialog>
-  <dialog class="alert pin" id="pinDlg" aria-labelledby="pinTitle" aria-describedby="pinSub">
-    <span class="ms ai" aria-hidden="true" style="color:var(--primary)">lock</span>
-    <h2 id="pinTitle">Enter PIN</h2>
-    <p id="pinSub"></p>
-    <div class="dots" id="pinDots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-    <p class="pin-err" id="pinErr" role="alert"></p>
-    <div class="keypad" id="keypad"><button type="button"  data-k="1">1</button><button type="button"  data-k="2">2</button><button type="button"  data-k="3">3</button><button type="button"  data-k="4">4</button><button type="button"  data-k="5">5</button><button type="button"  data-k="6">6</button><button type="button"  data-k="7">7</button><button type="button"  data-k="8">8</button><button type="button"  data-k="9">9</button><span></span><button type="button"  data-k="0">0</button><button type="button" class="bk" data-k="bk" aria-label="Delete digit"><span class="ms" aria-hidden="true">backspace</span></button></div>
-    <div class="alert-actions"><button type="button" class="btn text" id="pinCancel">Cancel</button></div>
-  </dialog>
-  <dialog class="sheet" id="bookSheet" aria-labelledby="bookTitle">
-    <form id="bookForm" autocomplete="off">
-      <div class="handle" aria-hidden="true"></div>
-      <h2 id="bookTitle">Add to your calendar</h2>
-      <p class="rate-sub" id="bookWhen"></p>
-      <div class="field"><input id="bTitle" maxlength="100" placeholder=" "><label for="bTitle">Event name</label></div>
-      <p class="sub" id="bCalLabel">Which calendar?</p>
-      <div class="pick" id="bCal" role="radiogroup" aria-labelledby="bCalLabel"></div>
-      <p class="sheet-meta" id="bookNote"></p>
-      <div class="sheet-actions">
-        <span class="grow"></span>
-        <button type="button" class="btn text" id="bookCancel">Cancel</button>
-        <button type="submit" class="btn filled" id="bookSave">Add to calendar</button>
-      </div>
-    </form>
-  </dialog>
-  <div class="snack" id="snack" role="status"><span id="snackMsg"></span><button type="button" id="snackUndo">Undo</button></div>
 
+  <dialog class="sheet actions-sheet" id="actionSheet" aria-label="Options">
+    <div class="grabber" aria-hidden="true"></div>
+    <div class="action-list" id="actionList"></div>
+    <button type="button" class="btn plain block cancel" data-close>Cancel</button>
+  </dialog>
+
+  <div class="toast" id="toast" role="status"><span id="toastText"></span><button type="button" id="toastUndo" hidden>Undo</button></div>
+  <div class="fx" id="fx" aria-hidden="true"></div>
 </div>
 
 <script type="module">import './js/main.js';</script>

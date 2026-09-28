@@ -72,7 +72,7 @@ The first time you connect, Google warns that it "hasn't verified this app". It'
 If the Outlook account is a work or school account, the organization may need to approve the app. A personal Outlook.com or Hotmail account just works.
 
 ### Using it
-- On the **Plan** tab, tap **Connect Google** or **Connect Outlook**. Each of you does this on your own phone.
+- In **Settings** (tap your initial, top right), tap **Connect Google Calendar** or **Connect Outlook**. Each of you does this on your own phone.
 - Suggestions only count times you're *both* free, within your date hours (weekday evenings and weekends by default). Change those hours in `js/calendar-config.js`.
 - Pick what the date is for (movies default to 2½ hours) and how long, then tap **Book**. Choose the calendar and it's added as a private event.
 - The other person sees it under **Booked** and taps **Add to mine** to put it in their calendar too.
@@ -92,25 +92,32 @@ Signing in again after that is a quick tap, and those limits come from Google an
 
 | To change… | Edit this file |
 |---|---|
-| Names, app title, tagline, list icons, priority labels, how many items Summary shows, Firebase keys | `js/config.js` |
-| Colors and palettes | `css/theme.css` (and the palette list in `js/config.js`) |
-| Sizes, spacing, shapes, layout | `css/app.css` |
-| What's on the page (sections, buttons, dialogs) | `index.html` |
-| How the Summary and Lists pages are drawn | `js/render.js` |
-| Tapping rows, checking off, priority flags, switching pages/tabs | `js/actions.js` |
-| Add/edit item sheet | `js/item-sheet.js` |
-| Creating, editing, deleting lists | `js/list-sheet.js` |
-| Rating sheet and stars | `js/rating.js` |
-| "Who's on this phone" and PINs | `js/people.js` |
-| Palette menu | `js/palette.js` |
+| Firebase keys, app name, list icons, priority labels, default lists | `js/config.js` |
 | Calendar keys, date hours, lengths, how many suggestions | `js/calendar-config.js` |
-| Connecting Google/Outlook, reading busy times, creating events | `js/calendar.js` |
-| Plan tab: suggestions, booking | `js/planner.js` |
+| Colors and palettes | `css/theme.css` |
+| Sizes, spacing, layout, desktop vs phone | `css/app.css` |
+| What's on each page (the structure) | `index.html` |
+| The photos | `js/images.js` |
+| Home page | `js/view-home.js` |
+| Lists page / one list's page | `js/view-lists.js` / `js/view-list.js` |
+| Plan page, suggestions, booking | `js/planner.js` |
+| Memories page | `js/view-memories.js` |
+| Settings page | `js/view-settings.js` |
+| How an item row looks | `js/rows.js` |
+| Top bar, tab bar, sync status | `js/render.js` |
+| Tapping rows, New buttons, saving | `js/actions.js` |
+| Add/edit item sheet | `js/item-sheet.js` |
+| New/edit/delete list | `js/list-sheet.js` |
+| Rating sheet | `js/rating.js` |
+| Who's using this device, PINs | `js/people.js` |
+| Page addresses and the back button | `js/router.js` |
+| Sheets, pop-ups, toasts | `js/dialogs.js` |
 | Animations | `js/motion.js` |
+| Connecting Google/Outlook | `js/calendar.js` |
 | Syncing with Firebase | `js/store.js` |
-| Start-up, welcome screen, share link | `js/main.js` |
+| Start-up, welcome screen, board link, updates | `js/main.js` |
 | Rules for averages, whose turn it is, sorting | `js/state.js` |
-| Your starting data | `data/seed.json` (only used when a board is first created) |
+| Starting data for a brand-new board | `data/seed.json` |
 
 **After uploading any change,** also open `index.html` and change the `VERSION` line near the top (any new text works, like today's date). That makes every phone load the new files instead of old saved copies.
 
